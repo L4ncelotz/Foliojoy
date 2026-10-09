@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import ReactECharts from 'echarts-for-react'
-import { ArrowDownToLine, ArrowRight, ChartNoAxesCombined, Check, CheckCircle2, ChevronDown, CircleAlert, FileSpreadsheet, FileUp, LayoutDashboard, LogOut, Plus, RefreshCw, ShieldCheck, Sparkles, Trash2, Wallet } from 'lucide-react'
+import { ArrowDownToLine, ArrowRight, ChartNoAxesCombined, Check, CheckCircle2, ChevronDown, CircleAlert, Eye, EyeOff, FileSpreadsheet, FileUp, LayoutDashboard, LogOut, Plus, RefreshCw, ShieldCheck, Sparkles, Trash2, Wallet } from 'lucide-react'
 import { api, emptyRow, refreshSession, setCsrf, type Dashboard, type Portfolio, type Preview, type RawRow, type Session } from './api'
 
 const currency = (value: string | null) => value === null ? '—' : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value))
@@ -12,12 +12,25 @@ function Login({ onAuthenticated }: { onAuthenticated: (session: Session) => voi
   const [mode, setMode] = useState<'register' | 'login'>('register')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({})
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  function validate(nextEmail = email, nextPassword = password, nextMode = mode) {
+    const next: { email?: string; password?: string } = {}
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextEmail.trim())) next.email = 'Enter a valid email address'
+    if (!nextPassword) next.password = 'Password is required'
+    else if (nextMode === 'register' && nextPassword.length < 12) next.password = 'Password must be at least 12 characters'
+    else if (nextPassword.length > 128) next.password = 'Password must be at most 128 characters'
+    return next
+  }
   async function submit(e: FormEvent) {
     e.preventDefault(); setBusy(true); setError('')
+    const next = validate()
+    setFieldErrors(next)
+    if (Object.keys(next).length) { setBusy(false); return }
     try {
-      await api(`/auth/${mode}`, { method: 'POST', body: JSON.stringify({ email, password }) })
+      await api(`/auth/${mode}`, { method: 'POST', body: JSON.stringify({ email: email.trim(), password }) })
       const session = await refreshSession()
       if (!session) throw new Error('Session could not be started')
       onAuthenticated(session)
@@ -27,18 +40,20 @@ function Login({ onAuthenticated }: { onAuthenticated: (session: Session) => voi
   return <div className="auth-layout">
     <div className="auth-side">
       <div className="brand"><div className="brand-mark"><ChartNoAxesCombined size={20}/></div><span>foliojoy<span className="brand-dot">.</span></span></div>
-      <div className="auth-lead"><p className="eyebrow">PORTFOLIO INTELLIGENCE</p><h1>A clearer picture of your investments.</h1><p>Import your holdings, verify the numbers, and understand what you actually own. Built on evidence, not guesses.</p></div>
+      <div className="auth-lead"><p className="eyebrow">PORTFOLIO INTELLIGENCE</p><h1>Your investments, in focus.</h1><p>Track your portfolio, understand your exposure, and make more informed decisions.</p>
+        <div className="preview-card" aria-hidden="true"><div className="preview-card-head"><span>Illustrative preview</span><span>Not your data</span></div><div className="preview-card-body"><div className="preview-donut" /><div className="preview-bars"><span style={{width:'72%'}} /><span style={{width:'48%'}} /><span style={{width:'31%'}} /><span style={{width:'18%'}} /></div></div></div>
+      </div>
       <div className="auth-foot"><ShieldCheck size={18} /> Your investment data stays private to your account.</div>
     </div>
-    <main className="auth-form-wrap"><form className="auth-form" onSubmit={submit}>
+    <main className="auth-form-wrap"><form className="auth-form" onSubmit={submit} noValidate>
       <div className="icon-tile"><Wallet size={22}/></div>
-      <h2>{mode === 'register' ? 'Create your workspace' : 'Welcome back'}</h2>
-      <p className="muted">{mode === 'register' ? 'Start with a portfolio snapshot in minutes.' : 'Sign in to your private investment workspace.'}</p>
-      <label className="field-label">Email address<input required type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)}/></label>
-      <label className="field-label">Password<input required minLength={12} maxLength={128} type="password" autoComplete={mode === 'register' ? 'new-password' : 'current-password'} placeholder="At least 12 characters" value={password} onChange={e => setPassword(e.target.value)}/></label>
+      <h2>{mode === 'register' ? 'Create your account' : 'Welcome back'}</h2>
+      <p className="muted">{mode === 'register' ? 'Start with a portfolio snapshot in minutes.' : 'Sign in to your portfolio.'}</p>
+      <label className="field-label">Email address<input required type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} onBlur={() => setFieldErrors(prev => ({ ...prev, email: validate(email, password, mode).email }))} aria-invalid={!!fieldErrors.email}/>{fieldErrors.email && <span className="field-error" role="alert">{fieldErrors.email}</span>}</label>
+      <label className="field-label">Password<span className="password-wrap"><input required maxLength={128} minLength={mode === 'register' ? 12 : undefined} type={showPassword ? 'text' : 'password'} autoComplete={mode === 'register' ? 'new-password' : 'current-password'} placeholder={mode === 'register' ? 'At least 12 characters' : 'Enter your password'} value={password} onChange={e => setPassword(e.target.value)} onBlur={() => setFieldErrors(prev => ({ ...prev, password: validate(email, password, mode).password }))} aria-invalid={!!fieldErrors.password}/><button type="button" className="password-toggle" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword(v => !v)}>{showPassword ? <EyeOff size={16}/> : <Eye size={16}/>}</button></span>{fieldErrors.password && <span className="field-error" role="alert">{fieldErrors.password}</span>}</label>
       {error && <div className="alert danger"><CircleAlert size={17}/>{error}</div>}
       <button disabled={busy} className="button primary wide" type="submit">{busy ? 'Please wait...' : mode === 'register' ? 'Create account' : 'Sign in'} <ArrowRight size={16}/></button>
-      <p className="switch">{mode === 'register' ? 'Already registered?' : 'New to Foliojoy?'} <button type="button" className="link-button" onClick={() => {setMode(mode === 'register' ? 'login' : 'register'); setError('')}}>{mode === 'register' ? 'Sign in' : 'Create account'}</button></p>
+      <p className="switch">{mode === 'register' ? 'Already registered?' : 'New to Foliojoy?'} <button type="button" className="link-button" onClick={() => {setMode(mode === 'register' ? 'login' : 'register'); setError(''); setFieldErrors({})}}>{mode === 'register' ? 'Sign in' : 'Create account'}</button></p>
       <p className="auth-note">Local development preview · Not ready for public financial data yet.</p>
     </form></main>
   </div>
@@ -119,7 +134,7 @@ function DashboardView({ portfolio, onImport }: { portfolio: Portfolio; onImport
   const {data, isLoading, error}=useQuery({queryKey:['dashboard',portfolio.id],queryFn:()=>api<Dashboard>(`/portfolios/${portfolio.id}/dashboard`)})
   if(isLoading)return <div className="empty-state">Loading dashboard...</div>
   if(error)return <div className="alert danger">{(error as Error).message}</div>
-  if(!data?.snapshot)return <div className="empty-state"><div className="empty-icon"><LayoutDashboard size={25}/></div><h2>Your portfolio starts here</h2><p>Import a snapshot or enter holdings manually to visualize allocation. No transaction history is needed to start.</p><button className="button primary" onClick={onImport}><Plus size={17}/> Add holdings</button></div>
+  if(!data?.snapshot)return <div className="surface onboarding"><p className="eyebrow">PORTFOLIO SETUP</p><h2>Add your first snapshot</h2><p className="muted">This portfolio has no holdings yet. Add a snapshot to see allocation. No purchase history is inferred.</p><ol className="onboarding-steps"><li className="done"><span className="step-dot"><Check size={14}/></span><div><strong>Portfolio created</strong><span>{portfolio.name} is ready</span></div></li><li className="current"><span className="step-dot">2</span><div><strong>Add holdings</strong><span>CSV upload or manual entry, USD only</span></div></li><li><span className="step-dot">3</span><div><strong>Review allocation</strong><span>Totals appear after you confirm</span></div></li></ol><div className="onboarding-actions"><button className="button primary" onClick={onImport}><Plus size={17}/> Add holdings</button></div></div>
   const largest = data.positions[0]
   return <div className="stack">
     <div className="split-heading"><div><p className="eyebrow">PORTFOLIO OVERVIEW</p><h2>{portfolio.name}</h2><p className="muted">Snapshot as of {data.snapshot.as_of} · USD valuations provided by you</p></div><button className="button secondary" onClick={onImport}><Plus size={16}/> Update snapshot</button></div>
@@ -156,20 +171,20 @@ export default function App() {
     catch(err){setError((err as Error).message)}
   }
   async function logout(){try{await api('/auth/logout',{method:'POST'})}finally{setCsrf('');setSession(null);queryClient.clear();setSelected(null)}}
-  if(loadingSession)return <div className="loading-view">Opening workspace...</div>
+  if(loadingSession)return <div className="loading-view">Opening your portfolio...</div>
   if(!session)return <Login onAuthenticated={s=>setSession(s)}/>
   return <div className="app-shell">
-    <aside className="sidebar"><div className="brand"><div className="brand-mark"><ChartNoAxesCombined size={19}/></div><span>foliojoy<span className="brand-dot">.</span></span></div><div className="nav-title">WORKSPACE</div>
+    <aside className="sidebar"><div className="brand"><div className="brand-mark"><ChartNoAxesCombined size={19}/></div><span>foliojoy<span className="brand-dot">.</span></span></div><div className="nav-title">PORTFOLIO</div>
       <button className={`nav-item ${screen==='dashboard'?'active':''}`} onClick={()=>setScreen('dashboard')}><LayoutDashboard size={18}/> Overview</button>
       <button className={`nav-item ${screen==='import'?'active':''}`} onClick={()=>setScreen('import')}><FileUp size={18}/> Import holdings</button>
-      <div className="sidebar-space"/><div className="sidebar-note"><ShieldCheck size={17}/><div><strong>Private workspace</strong><span>All data is scoped to your account.</span></div></div><button className="nav-item logout" onClick={logout}><LogOut size={17}/> Sign out</button>
+      <div className="sidebar-space"/><div className="sidebar-note-compact" title="All data is scoped to your account"><ShieldCheck size={15}/><span>Private to your account</span></div><button className="nav-item logout" onClick={logout}><LogOut size={17}/> Sign out</button>
     </aside>
-    <div className="main-area"><header className="topbar"><div className="mobile-brand">foliojoy<span>.</span></div><div className="portfolio-picker">{portfolio ? <><Wallet size={17}/><select aria-label="Portfolio" value={selected??''} onChange={e=>{setSelected(Number(e.target.value));setScreen('dashboard')}}>{portfolios.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select><ChevronDown size={15}/></> : <span>Portfolio workspace</span>}</div><div className="topbar-actions"><button className="button ghost" onClick={()=>setCreating(true)}><Plus size={17}/> <span>New portfolio</span></button><div className="user-circle" title={session.user.email}>{session.user.email.slice(0,1).toUpperCase()}</div></div></header>
+    <div className="main-area"><header className="topbar"><div className="mobile-brand">foliojoy<span>.</span></div><div className="portfolio-picker">{portfolio ? <><Wallet size={17}/><select aria-label="Portfolio" value={selected??''} onChange={e=>{setSelected(Number(e.target.value));setScreen('dashboard')}}>{portfolios.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select><ChevronDown size={15}/></> : <span>Select a portfolio</span>}</div><div className="topbar-actions"><button className="button ghost" onClick={()=>setCreating(true)}><Plus size={17}/> <span>New portfolio</span></button><div className="user-circle" title={session.user.email}>{session.user.email.slice(0,1).toUpperCase()}</div></div></header>
       <div className="mobile-nav"><button className={screen==='dashboard'?'selected':''} onClick={()=>setScreen('dashboard')}><LayoutDashboard size={16}/> Overview</button><button className={screen==='import'?'selected':''} onClick={()=>setScreen('import')}><FileUp size={16}/> Import</button></div>
       <main className="content">
-        {portfolio ? screen==='dashboard' ? <DashboardView portfolio={portfolio} onImport={()=>setScreen('import')}/> : <ImportStudio key={portfolio.id} portfolio={portfolio} onCommitted={()=>{queryClient.invalidateQueries({queryKey:['dashboard',portfolio.id]});setScreen('dashboard')}}/> : <div className="empty-state"><div className="empty-icon"><Wallet size={25}/></div><h2>Build your first portfolio</h2><p>Create a private workspace, then add holdings manually or upload a CSV snapshot.</p><button className="button primary" onClick={()=>setCreating(true)}>Create portfolio <ArrowRight size={16}/></button></div>}
+        {portfolio ? screen==='dashboard' ? <DashboardView portfolio={portfolio} onImport={()=>setScreen('import')}/> : <ImportStudio key={portfolio.id} portfolio={portfolio} onCommitted={()=>{queryClient.invalidateQueries({queryKey:['dashboard',portfolio.id]});setScreen('dashboard')}}/> : screen==='import' ? <div className="empty-state"><div className="empty-icon"><FileUp size={25}/></div><h2>Select a portfolio first</h2><p>Import needs a portfolio to attach the snapshot to. Create or select one to continue.</p><button className="button primary" onClick={()=>setCreating(true)}>Create portfolio <ArrowRight size={16}/></button></div> : <div className="empty-state"><div className="empty-icon"><Wallet size={25}/></div><h2>Create a portfolio to get started</h2><p>Portfolios hold your snapshots. Create one, then add holdings manually or upload a CSV snapshot.</p><button className="button primary" onClick={()=>setCreating(true)}>Create portfolio <ArrowRight size={16}/></button></div>}
       </main>
-      <footer className="app-footer"><span>Foliojoy · Prototype v0.1</span><span>Educational portfolio visualization · No investment advice</span></footer>
+      <footer className="app-footer"><span>Foliojoy</span><span>Educational portfolio visualization · No investment advice</span></footer>
     </div>
     {creating&&<div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setCreating(false)}}><form className="modal" onSubmit={createPortfolio}><div className="icon-tile"><Wallet size={20}/></div><h2>Create portfolio</h2><p className="muted">Your positions will be stored privately in this portfolio.</p><label className="field-label">Portfolio name<input required minLength={1} maxLength={120} value={name} onChange={e=>setName(e.target.value)}/></label><p className="info-line">Base currency: USD (initial MVP)</p>{error&&<div className="alert danger">{error}</div>}<div className="modal-actions"><button className="button secondary" type="button" onClick={()=>setCreating(false)}>Cancel</button><button className="button primary" type="submit">Create <ArrowRight size={16}/></button></div></form></div>}
   </div>
