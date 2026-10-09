@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react'
 import { ArrowRight, ChartNoAxesCombined, CircleAlert, Eye, EyeOff, ShieldCheck } from 'lucide-react'
 import { api, refreshSession, type Session } from '../api'
+import { BlurText } from './ui/BlurText'
 
 export function AuthView({ onAuthenticated }: { onAuthenticated: (session: Session) => void }) {
   const [mode, setMode] = useState<'register' | 'login'>('register')
@@ -58,7 +59,9 @@ export function AuthView({ onAuthenticated }: { onAuthenticated: (session: Sessi
 
         <div className="auth-hero-content">
           <span className="eyebrow">PORTFOLIO INTELLIGENCE</span>
-          <h1>Your investments, in focus.</h1>
+          <h1>
+            <BlurText text="Your investments, in focus." />
+          </h1>
           <p className="hero-desc">
             Track your portfolio, understand your exposure, and make more informed decisions.
           </p>

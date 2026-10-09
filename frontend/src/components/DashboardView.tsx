@@ -6,6 +6,7 @@ import { api, type Dashboard, type Portfolio } from '../api'
 import { SpotlightCard } from './ui/SpotlightCard'
 import { FadeContent } from './ui/FadeContent'
 import { OverviewEmptyState } from './OverviewEmptyState'
+import { CountUp } from './ui/CountUp'
 
 interface DashboardViewProps {
   portfolio: Portfolio
@@ -106,14 +107,25 @@ export function DashboardView({ portfolio, onImport }: DashboardViewProps) {
       <div className="stat-grid">
         <SpotlightCard className="stat-card">
           <span className="stat-card-label">Portfolio market value</span>
-          <strong className="stat-card-value tabular-numbers">{currency(data.total_value)}</strong>
+          <strong className="stat-card-value tabular-numbers">
+            {data.total_value !== null ? (
+              <CountUp
+                to={Number(data.total_value)}
+                duration={700}
+                formatter={val => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val)}
+              />
+            ) : (
+              '—'
+            )}
+          </strong>
           <span className="stat-card-caption">Based on confirmed imported values</span>
         </SpotlightCard>
 
         <SpotlightCard className="stat-card">
           <span className="stat-card-label">Holdings</span>
-          <strong className="stat-card-value tabular-numbers">{data.positions.length}</strong>
-          <span className="stat-card-caption">Unique symbol + exchange pairs</span>
+          <strong className="stat-card-value tabular-numbers">
+            <CountUp to={data.positions.length} duration={500} />
+          </strong>
         </SpotlightCard>
 
         <SpotlightCard className="stat-card">

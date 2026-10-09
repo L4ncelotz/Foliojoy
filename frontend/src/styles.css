@@ -431,6 +431,53 @@ h3 {
 }
 
 /* ==========================================================================
+   AnimatedContent (Smooth direction slide and fade transition)
+   ========================================================================== */
+
+.animated-content {
+  animation: animatedContentIn var(--anim-duration, 240ms) var(--ease-smooth) forwards;
+}
+
+@keyframes animatedContentIn {
+  from {
+    opacity: 0;
+    transform: var(--anim-start-transform, translateY(8px));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   BlurText (Gentle staggered blur-in reveal for hero headlines)
+   ========================================================================== */
+
+.blur-text-wrap {
+  display: inline-block;
+}
+
+.blur-word {
+  display: inline-block;
+  opacity: 0;
+  filter: blur(8px);
+  animation: blurWordIn 420ms var(--ease-smooth) forwards;
+}
+
+@keyframes blurWordIn {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
    Brand & Navigation Shell
    ========================================================================== */
 
@@ -1055,6 +1102,20 @@ h3 {
   gap: 16px;
 }
 
+.action-card-spotlight {
+  padding: 0;
+  border-radius: var(--radius-md);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+}
+
+.action-card-spotlight .action-card {
+  width: 100%;
+  border: none;
+  background: transparent;
+}
+
 .action-card {
   padding: 18px 20px;
   border-radius: var(--radius-md);
@@ -1523,11 +1584,16 @@ h3 {
 
 .auth-hero-column {
   padding: 48px clamp(24px, 5vw, 64px);
-  background: radial-gradient(circle at 60% 40%, #152230 0%, #0d141e 50%, #090d15 100%);
+  background-color: var(--bg-canvas);
+  background-image:
+    radial-gradient(circle at 60% 40%, rgba(21, 34, 48, 0.92) 0%, rgba(13, 20, 30, 0.98) 55%, #090d15 100%),
+    radial-gradient(circle, rgba(201, 233, 142, 0.08) 1px, transparent 1px);
+  background-size: 100% 100%, 24px 24px;
   border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  position: relative;
 }
 
 .auth-hero-content {
