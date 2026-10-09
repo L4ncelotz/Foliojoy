@@ -49,8 +49,8 @@ function Login({ onAuthenticated }: { onAuthenticated: (session: Session) => voi
       <div className="icon-tile"><Wallet size={22}/></div>
       <h2>{mode === 'register' ? 'Create your account' : 'Welcome back'}</h2>
       <p className="muted">{mode === 'register' ? 'Start with a portfolio snapshot in minutes.' : 'Sign in to your portfolio.'}</p>
-      <label className="field-label">Email address<input required type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} onBlur={() => setFieldErrors(prev => ({ ...prev, email: validate(email, password, mode).email }))} aria-invalid={!!fieldErrors.email}/>{fieldErrors.email && <span className="field-error" role="alert">{fieldErrors.email}</span>}</label>
-      <label className="field-label">Password<span className="password-wrap"><input required maxLength={128} minLength={mode === 'register' ? 12 : undefined} type={showPassword ? 'text' : 'password'} autoComplete={mode === 'register' ? 'new-password' : 'current-password'} placeholder={mode === 'register' ? 'At least 12 characters' : 'Enter your password'} value={password} onChange={e => setPassword(e.target.value)} onBlur={() => setFieldErrors(prev => ({ ...prev, password: validate(email, password, mode).password }))} aria-invalid={!!fieldErrors.password}/><button type="button" className="password-toggle" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword(v => !v)}>{showPassword ? <EyeOff size={16}/> : <Eye size={16}/>}</button></span>{fieldErrors.password && <span className="field-error" role="alert">{fieldErrors.password}</span>}</label>
+      <label className="field-label">Email address<input required type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} onBlur={() => setFieldErrors(prev => ({ ...prev, email: validate(email, password, mode).email }))} aria-invalid={!!fieldErrors.email} aria-describedby={fieldErrors.email ? 'auth-email-error' : undefined}/>{fieldErrors.email && <span className="field-error" role="alert" id="auth-email-error">{fieldErrors.email}</span>}</label>
+      <label className="field-label">Password<span className="password-wrap"><input required maxLength={128} minLength={mode === 'register' ? 12 : undefined} type={showPassword ? 'text' : 'password'} autoComplete={mode === 'register' ? 'new-password' : 'current-password'} placeholder={mode === 'register' ? 'At least 12 characters' : 'Enter your password'} value={password} onChange={e => setPassword(e.target.value)} onBlur={() => setFieldErrors(prev => ({ ...prev, password: validate(email, password, mode).password }))} aria-invalid={!!fieldErrors.password} aria-describedby={fieldErrors.password ? 'auth-password-error' : undefined}/><button type="button" className="password-toggle" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword(v => !v)}>{showPassword ? <EyeOff size={16}/> : <Eye size={16}/>}</button></span>{fieldErrors.password && <span className="field-error" role="alert" id="auth-password-error">{fieldErrors.password}</span>}</label>
       {error && <div className="alert danger"><CircleAlert size={17}/>{error}</div>}
       <button disabled={busy} className="button primary wide" type="submit">{busy ? 'Please wait...' : mode === 'register' ? 'Create account' : 'Sign in'} <ArrowRight size={16}/></button>
       <p className="switch">{mode === 'register' ? 'Already registered?' : 'New to Foliojoy?'} <button type="button" className="link-button" onClick={() => {setMode(mode === 'register' ? 'login' : 'register'); setError(''); setFieldErrors({})}}>{mode === 'register' ? 'Sign in' : 'Create account'}</button></p>
@@ -66,6 +66,7 @@ function ImportStudio({ portfolio, onCommitted }: { portfolio: Portfolio; onComm
   const [error, setError] = useState('')
   const [working, setWorking] = useState(false)
   const [fileName, setFileName] = useState('')
+  const [method, setMethod] = useState<'manual' | 'csv'>('manual')
   const inputRef = useRef<HTMLInputElement>(null)
   const changeRow = (index: number, field: keyof RawRow, value: string) => {
     setRows(prev => prev.map((row, i) => i === index ? { ...row, [field]: value } : row)); setPreview(null)
@@ -87,7 +88,7 @@ function ImportStudio({ portfolio, onCommitted }: { portfolio: Portfolio; onComm
     }
     try {
       const result = await api<Preview>(`/portfolios/${portfolio.id}/imports/preview`, { method: 'POST', body: JSON.stringify({ csv_text: await file.text() }) })
-      setPreview(result)
+      setPreview(result); setMethod('csv')
       setRows(result.rows.map(row => ({symbol:row.symbol, exchange:row.exchange,quantity:row.quantity,unit_price:row.unit_price,market_value:row.market_value,currency:row.currency,snapshot_date:row.snapshot_date})))
       if (result.rows.length && result.rows[0].snapshot_date) setDate(result.rows[0].snapshot_date)
     } catch (err) {setPreview(null); setError((err as Error).message)}
@@ -104,12 +105,12 @@ function ImportStudio({ portfolio, onCommitted }: { portfolio: Portfolio; onComm
   }
   return <div className="studio stack">
     <div className="split-heading"><div><p className="eyebrow">PORTFOLIO IMPORT</p><h2>Add your holdings</h2><p className="muted">Enter a snapshot of what you currently own. No purchase history is inferred.</p></div></div>
-    <div className="import-methods">
-      <button className="method-card" onClick={() => inputRef.current?.click()}><FileUp size={23}/><strong>Import CSV</strong><span>Upload a structured snapshot</span></button>
-      <a className="method-card" download href="/api/templates/holdings.csv"><ArrowDownToLine size={23}/><strong>CSV template</strong><span>Download a sample to edit</span></a>
-      <button className="method-card" onClick={() => {setRows([emptyRow(date)]);setPreview(null);setFileName('')}}><FileSpreadsheet size={23}/><strong>Manual entry</strong><span>Enter or correct holdings</span></button>
+    <div className="import-methods" role="group" aria-label="Import method">
+      <button type="button" className={`method-card${method === 'csv' ? ' active' : ''}`} aria-pressed={method === 'csv'} onClick={() => { setMethod('csv'); inputRef.current?.click() }}><FileUp size={23}/><strong>Import CSV</strong><span>Upload a structured snapshot</span></button>
+      <button type="button" className={`method-card${method === 'manual' ? ' active' : ''}`} aria-pressed={method === 'manual'} onClick={() => { setMethod('manual'); setRows([emptyRow(date)]); setPreview(null); setFileName('') }}><FileSpreadsheet size={23}/><strong>Manual entry</strong><span>Enter or correct holdings</span></button>
       <input hidden type="file" accept=".csv,text/csv" ref={inputRef} onChange={e => loadFile(e.target.files?.[0])}/>
     </div>
+    <div className="template-row"><a className="template-link" download href="/api/templates/holdings.csv"><ArrowDownToLine size={15}/> Download CSV template</a><span>Use it to format your upload.</span></div>
     <div className="surface editor-card">
       <div className="editor-header"><div><h3>Holdings snapshot</h3><span>{fileName ? `Imported from ${fileName}` : 'Manual entries'} · USD only</span></div><label className="date-input">As of <input type="date" max={currentDate()} value={date} onChange={e=>changeDate(e.target.value)}/></label></div>
       <div className="table-scroll"><table className="edit-table"><thead><tr><th>Symbol</th><th>Exchange</th><th>Quantity</th><th>Unit price ($)</th><th>Market value ($)</th><th></th></tr></thead><tbody>{rows.map((row,i)=><tr key={i} className={preview?.rows[i]?.status==='invalid'?'invalid-row':''}>
@@ -134,7 +135,7 @@ function DashboardView({ portfolio, onImport }: { portfolio: Portfolio; onImport
   const {data, isLoading, error}=useQuery({queryKey:['dashboard',portfolio.id],queryFn:()=>api<Dashboard>(`/portfolios/${portfolio.id}/dashboard`)})
   if(isLoading)return <div className="empty-state">Loading dashboard...</div>
   if(error)return <div className="alert danger">{(error as Error).message}</div>
-  if(!data?.snapshot)return <div className="surface onboarding"><p className="eyebrow">PORTFOLIO SETUP</p><h2>Add your first snapshot</h2><p className="muted">This portfolio has no holdings yet. Add a snapshot to see allocation. No purchase history is inferred.</p><ol className="onboarding-steps"><li className="done"><span className="step-dot"><Check size={14}/></span><div><strong>Portfolio created</strong><span>{portfolio.name} is ready</span></div></li><li className="current"><span className="step-dot">2</span><div><strong>Add holdings</strong><span>CSV upload or manual entry, USD only</span></div></li><li><span className="step-dot">3</span><div><strong>Review allocation</strong><span>Totals appear after you confirm</span></div></li></ol><div className="onboarding-actions"><button className="button primary" onClick={onImport}><Plus size={17}/> Add holdings</button></div></div>
+  if(!data?.snapshot)return <div className="surface onboarding"><p className="eyebrow">PORTFOLIO OVERVIEW</p><h2>Your portfolio is ready.</h2><p className="muted">{portfolio.name} has no holdings yet. Add holdings to see your portfolio allocation.</p><div className="onboarding-actions"><button className="button primary" onClick={onImport}><Plus size={17}/> Add holdings</button></div></div>
   const largest = data.positions[0]
   return <div className="stack">
     <div className="split-heading"><div><p className="eyebrow">PORTFOLIO OVERVIEW</p><h2>{portfolio.name}</h2><p className="muted">Snapshot as of {data.snapshot.as_of} · USD valuations provided by you</p></div><button className="button secondary" onClick={onImport}><Plus size={16}/> Update snapshot</button></div>
