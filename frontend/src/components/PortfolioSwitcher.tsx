@@ -2,6 +2,7 @@ import { useState } from 'react'
 import * as Popover from '@radix-ui/react-popover'
 import { Briefcase, Check, ChevronsUpDown, Plus, Wallet } from 'lucide-react'
 import type { Portfolio } from '../api'
+import { Kbd } from './ui/Kbd'
 
 interface PortfolioSwitcherProps {
   portfolios: Portfolio[]
@@ -39,7 +40,10 @@ export function PortfolioSwitcher({
           align="start"
           sideOffset={8}
         >
-          <div className="popover-header">YOUR PORTFOLIOS</div>
+          <div className="popover-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>YOUR PORTFOLIOS</span>
+            <Kbd>ESC</Kbd>
+          </div>
           <div className="popover-list" role="listbox" aria-label="Portfolios">
             {portfolios.map(p => {
               const isSelected = p.id === selectedId

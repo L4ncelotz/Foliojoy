@@ -1,6 +1,7 @@
 import { ArrowRight, Check, Layers } from 'lucide-react'
 import { SpotlightCard } from './ui/SpotlightCard'
 import { FadeContent } from './ui/FadeContent'
+import { MagneticButton } from './ui/MagneticButton'
 import type { Portfolio } from '../api'
 
 interface OverviewEmptyStateProps {
@@ -36,14 +37,15 @@ export function OverviewEmptyState({ portfolio, onAddHoldings }: OverviewEmptySt
             Add your first holdings to unlock allocation insights.
           </p>
 
-          <button
+          <MagneticButton
             type="button"
             className="button primary"
             onClick={onAddHoldings}
+            strength={0.25}
           >
             <span>Add holdings</span>
             <ArrowRight size={16} />
-          </button>
+          </MagneticButton>
 
           <p className="empty-state-footnote">
             You can upload a CSV or enter holdings manually.

@@ -11,9 +11,12 @@ import {
   ShieldCheck,
   Trash2,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { api, emptyRow, type Portfolio, type Preview, type RawRow } from '../api'
 import { FadeContent } from './ui/FadeContent'
 import { SpotlightCard } from './ui/SpotlightCard'
+import { BorderBeam } from './ui/BorderBeam'
+import { MagneticButton } from './ui/MagneticButton'
 
 interface ImportStudioProps {
   portfolio: Portfolio
@@ -81,7 +84,9 @@ export function ImportStudio({ portfolio, onCommitted }: ImportStudioProps) {
     setError('')
     setFileName(file.name)
     if (file.size > 256000 || !file.name.toLowerCase().endsWith('.csv')) {
-      setError('This first slice supports CSV files up to 256 KB. Image, PDF and Excel import are scheduled for Phase 2.')
+      const msg = 'This first slice supports CSV files up to 256 KB. Image, PDF and Excel import are scheduled for Phase 2.'
+      setError(msg)
+      toast.error(msg)
       setWorking(false)
       return
     }
@@ -106,11 +111,13 @@ export function ImportStudio({ portfolio, onCommitted }: ImportStudioProps) {
         setDate(result.rows[0].snapshot_date)
       }
       tableRef.current?.scrollIntoView({ behavior: 'smooth' })
+      toast.success(`Imported ${result.rows.length} rows from ${file.name}`)
     } catch (err) {
       setPreview(null)
-      setError((err as Error).message)
+      const msg = (err as Error).message
+      setError(msg)
+      toast.error(msg)
     } finally {
-      setWorking(false)
       if (inputRef.current) inputRef.current.value = ''
     }
   }
@@ -124,9 +131,12 @@ export function ImportStudio({ portfolio, onCommitted }: ImportStudioProps) {
         method: 'POST',
         body: JSON.stringify({ rows }),
       })
+      toast.success('Holdings snapshot saved successfully!')
       onCommitted()
     } catch (err) {
-      setError((err as Error).message)
+      const msg = (err as Error).message
+      setError(msg)
+      toast.error(msg)
       setPreview(null)
     } finally {
       setWorking(false)
@@ -191,21 +201,20 @@ export function ImportStudio({ portfolio, onCommitted }: ImportStudioProps) {
         <h3>Drop your CSV file here</h3>
         <p className="dropzone-subtitle">or browse files from your device</p>
 
-        <button
+        <MagneticButton
           type="button"
           className="button primary"
           onClick={e => {
             e.stopPropagation()
             inputRef.current?.click()
           }}
+          strength={0.25}
         >
           <span>Choose CSV</span>
-        </button>
-
+        </MagneticButton>
         <span className="dropzone-badge">
           Supports CSV files up to 256 KB · USD only
         </span>
-
         <input
           hidden
           type="file"
@@ -213,6 +222,7 @@ export function ImportStudio({ portfolio, onCommitted }: ImportStudioProps) {
           ref={inputRef}
           onChange={e => loadFile(e.target.files?.[0])}
         />
+        {isDragging && <BorderBeam duration={5} color="#c9e98e" />}
       </SpotlightCard>
 
       {/* Secondary Actions (2-Column Grid matching Image #2) */}
@@ -251,7 +261,8 @@ export function ImportStudio({ portfolio, onCommitted }: ImportStudioProps) {
       </div>
 
       {/* Polished Holdings Snapshot Table Editor */}
-      <div className="surface editor-card" ref={tableRef}>
+      <div className="surface editor-card" ref={tableRef} style={{ position: 'relative' }}>
+        {preview?.valid && <BorderBeam duration={8} color="#4ade80" />}
         <div className="editor-header">
           <div>
             <h3>Holdings snapshot</h3>
