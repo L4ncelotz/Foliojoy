@@ -46,3 +46,9 @@
 ## How to record new decisions
 
 Add an ID, date, status, options considered, rationale, owner confirmation, and links to affected docs. Do not silently convert a proposal into a confirmed requirement.
+
+---
+
+**Added 2026-10-09:**
+- D-010 (CONFIRMED): Transaction ledger kept separate from snapshot (`docs/TRANSACTION_LEDGER_SPEC.md`); fixtures added but no P&L engine until reconciliation tests pass.
+- D-011 (CONFIRMED): CI upgraded (`actions/setup-python@v5`, Python 3.12; `actions/setup-node@v4`, `node-version: 22`; PostgreSQL service added).

@@ -1,0 +1,3 @@
+date,action,symbol,exchange,quantity,unit_price,currency,fee_amount
+2026-01-10,BUY,NVDA,NASDAQ,10,130.00,USD,0.00
+2026-02-05,SELL,NVDA,NASDAQ,5,140.00,USD,5.00
