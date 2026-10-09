@@ -1,4 +1,5 @@
 import pytest
+from datetime import date, timedelta
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -39,10 +40,14 @@ def create(client, headers):
     return r.json()['id']
 
 
+TODAY = date.today().isoformat()
+YESTERDAY = (date.today() - timedelta(days=1)).isoformat()
+
+
 def sample_rows():
     return [
-        {'symbol': 'NVDA', 'exchange': 'NASDAQ', 'quantity': '10', 'unit_price': '130', 'market_value': '', 'currency': 'USD', 'snapshot_date': '2026-01-15'},
-        {'symbol': 'AVGO', 'exchange': 'NASDAQ', 'quantity': '2', 'unit_price': '', 'market_value': '900.00', 'currency': 'USD', 'snapshot_date': '2026-01-15'},
+        {'symbol': 'NVDA', 'exchange': 'NASDAQ', 'quantity': '10', 'unit_price': '130', 'market_value': '', 'currency': 'USD', 'snapshot_date': TODAY},
+        {'symbol': 'AVGO', 'exchange': 'NASDAQ', 'quantity': '2', 'unit_price': '', 'market_value': '900.00', 'currency': 'USD', 'snapshot_date': TODAY},
     ]
 
 
@@ -67,7 +72,7 @@ def test_full_flow_and_idempotent_import(client):
     assert data['positions'][0]['symbol'] == 'NVDA'
     assert data['positions'][0]['weight_pct'] == '59.09'
     assert 'pnl' in data['metrics_unavailable']
-    assert data['snapshot']['as_of'] == '2026-01-15'
+    assert data['snapshot']['as_of'] == TODAY
 
 
 def test_reject_mismatch_and_no_auto_inferred_values(client):
@@ -91,7 +96,7 @@ def test_duplicate_instrument_and_inconsistent_date(client):
     headers = register(client)
     pid = create(client, headers)
     values = sample_rows()
-    values.append({**values[0], 'snapshot_date':'2026-01-16'})
+    values.append({**values[0], 'snapshot_date': YESTERDAY})
     r = client.post(f'/api/portfolios/{pid}/imports/preview', json={'rows':values}, headers=headers)
     assert r.status_code == 200
     assert all(row['status'] == 'invalid' for row in r.json()['rows'])

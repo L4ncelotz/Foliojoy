@@ -1,9 +1,9 @@
 @echo off
-REM Northstar one-command dev launcher (no Docker).
+REM Foliojoy one-command dev launcher (no Docker).
 REM Starts the backend (own window) + frontend (this window).
 cd /d "%~dp0"
 
-start "Northstar Backend - uvicorn :8000" "%~dp0backend\dev-serve.bat"
+start "Foliojoy Backend - uvicorn :8000" "%~dp0backend\dev-serve.bat"
 
 cd /d "%~dp0frontend"
 echo.

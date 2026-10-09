@@ -26,7 +26,7 @@ function Login({ onAuthenticated }: { onAuthenticated: (session: Session) => voi
   }
   return <div className="auth-layout">
     <div className="auth-side">
-      <div className="brand"><div className="brand-mark"><ChartNoAxesCombined size={20}/></div><span>northstar<span className="brand-dot">.</span></span></div>
+      <div className="brand"><div className="brand-mark"><ChartNoAxesCombined size={20}/></div><span>foliojoy<span className="brand-dot">.</span></span></div>
       <div className="auth-lead"><p className="eyebrow">PORTFOLIO INTELLIGENCE</p><h1>A clearer picture of your investments.</h1><p>Import your holdings, verify the numbers, and understand what you actually own. Built on evidence, not guesses.</p></div>
       <div className="auth-foot"><ShieldCheck size={18} /> Your investment data stays private to your account.</div>
     </div>
@@ -38,7 +38,7 @@ function Login({ onAuthenticated }: { onAuthenticated: (session: Session) => voi
       <label className="field-label">Password<input required minLength={12} maxLength={128} type="password" autoComplete={mode === 'register' ? 'new-password' : 'current-password'} placeholder="At least 12 characters" value={password} onChange={e => setPassword(e.target.value)}/></label>
       {error && <div className="alert danger"><CircleAlert size={17}/>{error}</div>}
       <button disabled={busy} className="button primary wide" type="submit">{busy ? 'Please wait...' : mode === 'register' ? 'Create account' : 'Sign in'} <ArrowRight size={16}/></button>
-      <p className="switch">{mode === 'register' ? 'Already registered?' : 'New to Northstar?'} <button type="button" className="link-button" onClick={() => {setMode(mode === 'register' ? 'login' : 'register'); setError('')}}>{mode === 'register' ? 'Sign in' : 'Create account'}</button></p>
+      <p className="switch">{mode === 'register' ? 'Already registered?' : 'New to Foliojoy?'} <button type="button" className="link-button" onClick={() => {setMode(mode === 'register' ? 'login' : 'register'); setError('')}}>{mode === 'register' ? 'Sign in' : 'Create account'}</button></p>
       <p className="auth-note">Local development preview · Not ready for public financial data yet.</p>
     </form></main>
   </div>
@@ -159,17 +159,17 @@ export default function App() {
   if(loadingSession)return <div className="loading-view">Opening workspace...</div>
   if(!session)return <Login onAuthenticated={s=>setSession(s)}/>
   return <div className="app-shell">
-    <aside className="sidebar"><div className="brand"><div className="brand-mark"><ChartNoAxesCombined size={19}/></div><span>northstar<span className="brand-dot">.</span></span></div><div className="nav-title">WORKSPACE</div>
+    <aside className="sidebar"><div className="brand"><div className="brand-mark"><ChartNoAxesCombined size={19}/></div><span>foliojoy<span className="brand-dot">.</span></span></div><div className="nav-title">WORKSPACE</div>
       <button className={`nav-item ${screen==='dashboard'?'active':''}`} onClick={()=>setScreen('dashboard')}><LayoutDashboard size={18}/> Overview</button>
       <button className={`nav-item ${screen==='import'?'active':''}`} onClick={()=>setScreen('import')}><FileUp size={18}/> Import holdings</button>
       <div className="sidebar-space"/><div className="sidebar-note"><ShieldCheck size={17}/><div><strong>Private workspace</strong><span>All data is scoped to your account.</span></div></div><button className="nav-item logout" onClick={logout}><LogOut size={17}/> Sign out</button>
     </aside>
-    <div className="main-area"><header className="topbar"><div className="mobile-brand">northstar<span>.</span></div><div className="portfolio-picker">{portfolio ? <><Wallet size={17}/><select aria-label="Portfolio" value={selected??''} onChange={e=>{setSelected(Number(e.target.value));setScreen('dashboard')}}>{portfolios.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select><ChevronDown size={15}/></> : <span>Portfolio workspace</span>}</div><div className="topbar-actions"><button className="button ghost" onClick={()=>setCreating(true)}><Plus size={17}/> <span>New portfolio</span></button><div className="user-circle" title={session.user.email}>{session.user.email.slice(0,1).toUpperCase()}</div></div></header>
+    <div className="main-area"><header className="topbar"><div className="mobile-brand">foliojoy<span>.</span></div><div className="portfolio-picker">{portfolio ? <><Wallet size={17}/><select aria-label="Portfolio" value={selected??''} onChange={e=>{setSelected(Number(e.target.value));setScreen('dashboard')}}>{portfolios.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select><ChevronDown size={15}/></> : <span>Portfolio workspace</span>}</div><div className="topbar-actions"><button className="button ghost" onClick={()=>setCreating(true)}><Plus size={17}/> <span>New portfolio</span></button><div className="user-circle" title={session.user.email}>{session.user.email.slice(0,1).toUpperCase()}</div></div></header>
       <div className="mobile-nav"><button className={screen==='dashboard'?'selected':''} onClick={()=>setScreen('dashboard')}><LayoutDashboard size={16}/> Overview</button><button className={screen==='import'?'selected':''} onClick={()=>setScreen('import')}><FileUp size={16}/> Import</button></div>
       <main className="content">
         {portfolio ? screen==='dashboard' ? <DashboardView portfolio={portfolio} onImport={()=>setScreen('import')}/> : <ImportStudio key={portfolio.id} portfolio={portfolio} onCommitted={()=>{queryClient.invalidateQueries({queryKey:['dashboard',portfolio.id]});setScreen('dashboard')}}/> : <div className="empty-state"><div className="empty-icon"><Wallet size={25}/></div><h2>Build your first portfolio</h2><p>Create a private workspace, then add holdings manually or upload a CSV snapshot.</p><button className="button primary" onClick={()=>setCreating(true)}>Create portfolio <ArrowRight size={16}/></button></div>}
       </main>
-      <footer className="app-footer"><span>Northstar · Prototype v0.1</span><span>Educational portfolio visualization · No investment advice</span></footer>
+      <footer className="app-footer"><span>Foliojoy · Prototype v0.1</span><span>Educational portfolio visualization · No investment advice</span></footer>
     </div>
     {creating&&<div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setCreating(false)}}><form className="modal" onSubmit={createPortfolio}><div className="icon-tile"><Wallet size={20}/></div><h2>Create portfolio</h2><p className="muted">Your positions will be stored privately in this portfolio.</p><label className="field-label">Portfolio name<input required minLength={1} maxLength={120} value={name} onChange={e=>setName(e.target.value)}/></label><p className="info-line">Base currency: USD (initial MVP)</p>{error&&<div className="alert danger">{error}</div>}<div className="modal-actions"><button className="button secondary" type="button" onClick={()=>setCreating(false)}>Cancel</button><button className="button primary" type="submit">Create <ArrowRight size={16}/></button></div></form></div>}
   </div>

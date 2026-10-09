@@ -1,4 +1,4 @@
-# Northstar — Portfolio Intelligence (Phase 1 vertical slice)
+# Foliojoy — Portfolio Intelligence (Phase 1 vertical slice)
 
 **Status: development preview only. NOT ready to expose to public users or real sensitive documents.**
 

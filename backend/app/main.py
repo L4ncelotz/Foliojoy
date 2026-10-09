@@ -5,7 +5,7 @@ import io
 import json
 import os
 import secrets
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 from typing import Annotated
 
@@ -22,7 +22,7 @@ from .database import get_db
 from .imports import CommitRequest, PreviewRequest, normalize, parse_csv
 from .models import Portfolio, Position, Snapshot, User, UserSession, utcnow
 
-app = FastAPI(title="Portfolio Intelligence API", version="0.1.0", docs_url="/api/docs", openapi_url="/api/openapi.json")
+app = FastAPI(title="Foliojoy API", version="0.1.0", docs_url="/api/docs", openapi_url="/api/openapi.json")
 ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:8080").split(",") if origin.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credentials=True, allow_methods=["GET", "POST"], allow_headers=["Content-Type", "X-CSRF-Token"])
 COOKIE_SECURE = os.getenv("COOKIE_SECURE", "false").lower() == "true"
@@ -188,7 +188,6 @@ def commit(portfolio_id: int, data: CommitRequest, session: Annotated[UserSessio
     existing = db.scalar(select(Snapshot).where(Snapshot.portfolio_id == portfolio_id, Snapshot.fingerprint == fingerprint))
     if existing:
         return {"snapshot_id": existing.id, "reused": True}
-    from datetime import date
     snapshot = Snapshot(portfolio_id=portfolio_id, fingerprint=fingerprint, as_of=date.fromisoformat(rows[0]["snapshot_date"]))
     snapshot.positions = [Position(
         symbol=row["symbol"], exchange=row["exchange"], quantity=Decimal(row["quantity"]),
@@ -236,6 +235,6 @@ def holdings_csv():
     buff = io.StringIO()
     writer = csv.writer(buff)
     writer.writerow(["symbol", "exchange", "quantity", "unit_price", "market_value", "currency", "snapshot_date"])
-    writer.writerow(["NVDA", "NASDAQ", "10", "130.00", "", "USD", "2026-01-15"])
-    writer.writerow(["AVGO", "NASDAQ", "5", "", "1500.00", "USD", "2026-01-15"])
+    writer.writerow(["NVDA", "NASDAQ", "10", "130.00", "", "USD", date.today().isoformat()])
+    writer.writerow(["AVGO", "NASDAQ", "5", "", "1500.00", "USD", date.today().isoformat()])
     return PlainTextResponse(buff.getvalue(), media_type="text/csv", headers={"Content-Disposition": 'attachment; filename="holdings-template.csv"'})

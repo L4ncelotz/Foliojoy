@@ -36,4 +36,4 @@ The project has **started**, but Phase 1 is **not complete**.
 4. Add stronger authentication and abuse protections before any public exposure.
 5. Introduce image import staging and evidence-linked human review only after the underlying snapshot importer is stable.
 
-The name **Northstar** is a temporary working label, not an agreed product brand.
+The product is branded **Foliojoy** (the temporary working label "Northstar" was retired).
