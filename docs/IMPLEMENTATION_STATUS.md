@@ -23,10 +23,10 @@ The project has **started**, but Phase 1 is **not complete**.
 
 ## Test status
 
-- Python API unit/integration tests passed in SQLite test harness (not PostgreSQL integration).
-- Alembic migration 0001 applied to a temporary SQLite database.
-- Frontend dependency installation/build **not verified** in this execution environment because npm registry DNS resolution is blocked. Test on a development machine with npm registry access before considering it runnable.
-- Docker Compose provided but Docker was unavailable here, so it is **not tested**.
+- Python API unit/integration tests passed in SQLite test harness; PostgreSQL integration test added in CI (service container, `postgresql+psycopg`).
+- Alembic migration 0001 applied to a temporary SQLite database; PostgreSQL migration verified in CI job.
+- Frontend build verified (`npm run build` passes; chunk-size cosmetic warning only). Dependency installation works (npm registry accessible); `npm ci` used in CI and Docker build.
+- Docker Compose provided but Docker was unavailable here; Dockerfiles and `.dockerignore` updated (`npm ci`, context exclusions).
 
 ## Next vertical slice
 
