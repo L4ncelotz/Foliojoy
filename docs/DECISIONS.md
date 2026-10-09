@@ -52,3 +52,4 @@ Add an ID, date, status, options considered, rationale, owner confirmation, and 
 **Added 2026-10-09:**
 - D-010 (CONFIRMED): Transaction ledger kept separate from snapshot (`docs/TRANSACTION_LEDGER_SPEC.md`); fixtures added but no P&L engine until reconciliation tests pass.
 - D-011 (CONFIRMED): CI upgraded (`actions/setup-python@v5`, Python 3.12; `actions/setup-node@v4`, `node-version: 22`; PostgreSQL service added).
+- D-012 (PROPOSED, pending owner confirmation): Ledger identity is `(portfolio_id, entry_key)` with client-supplied idempotency keys (repeats allowed, re-upload idempotent, same-key conflict errors); per-action monetary matrix with uniform `amount = quantity x unit_price`, unsigned quantities, cash rows carrying no instrument; append-only ledger with snapshot/ledger reconciliation by explicit user review. See `docs/TRANSACTION_LEDGER_SPEC.md`.

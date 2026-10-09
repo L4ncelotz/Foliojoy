@@ -1,3 +1,7 @@
-date,action,symbol,exchange,quantity,unit_price,currency,fee_amount
-2026-01-10,BUY,NVDA,NASDAQ,10,130.00,USD,0.00
-2026-02-05,SELL,NVDA,NASDAQ,5,140.00,USD,5.00
+date,action,symbol,exchange,quantity,unit_price,currency,fee_amount,entry_key
+2026-01-10,BUY,NVDA,NASDAQ,10,130.00,USD,0.00,buy-nvda-001
+2026-01-10,BUY,NVDA,NASDAQ,10,130.00,USD,0.00,buy-nvda-002
+2026-02-05,SELL,NVDA,NASDAQ,5,140.00,USD,5.00,sell-nvda-001
+2026-03-01,DIVIDEND,NVDA,NASDAQ,15,2.00,USD,0.00,div-nvda-001
+2026-03-05,FEE,,,,,USD,9.95,fee-001
+2026-03-10,DEPOSIT,,,5000,1.00,USD,0.00,dep-001
