@@ -18,8 +18,8 @@ from app.database import get_db
 from app.main import app
 
 DB_URL = os.getenv("DATABASE_URL", "sqlite:///./portfolio_local.db")
-EXPECTED_TABLES = ("users", "portfolios", "holding_snapshots", "snapshot_positions")
-HEAD_REVISION = "0001"
+EXPECTED_TABLES = ("users", "portfolios", "holding_snapshots", "snapshot_positions", "transactions")
+HEAD_REVISION = "0002"
 
 
 def _upgrade_to_head():
@@ -71,6 +71,18 @@ def test_postgres_alembic_migrations_and_api_smoke():
                 assert commit.status_code == 201, commit.text
                 dash = client.get(f"/api/portfolios/{pid}/dashboard")
                 assert dash.status_code == 200 and dash.json()["total_value"] == "1300.00", dash.text
+                rows = [{
+                    "date": date.today().isoformat(), "action": "BUY", "symbol": "NVDA", "exchange": "NASDAQ",
+                    "quantity": "10", "unit_price": "130", "cash_amount": "", "currency": "USD",
+                    "fee_amount": "0", "entry_key": f"pg-{uuid.uuid4().hex[:8]}", "notes": "",
+                }]
+                preview = client.post(f"/api/portfolios/{pid}/transactions/preview", json={"rows": rows}, headers=headers)
+                assert preview.status_code == 200 and preview.json()["valid"], preview.text
+                commit = client.post(f"/api/portfolios/{pid}/transactions", json={"rows": rows}, headers=headers)
+                assert commit.status_code == 201, commit.text
+                assert commit.json()["cash_balance"] == "-1300.00", commit.text
+                items = client.get(f"/api/portfolios/{pid}/transactions", headers=headers).json()
+                assert len(items) == 1 and items[0]["symbol"] == "NVDA", items
         finally:
             app.dependency_overrides.clear()
     finally:

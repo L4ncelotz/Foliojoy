@@ -20,7 +20,8 @@ from sqlalchemy.orm import Session
 
 from .database import get_db
 from .imports import CommitRequest, PreviewRequest, normalize, parse_csv
-from .models import Portfolio, Position, Snapshot, User, UserSession, utcnow
+from .ledger import LedgerCommitRequest, LedgerPreviewRequest, cash_effect, normalize_ledger, parse_ledger_csv
+from .models import Portfolio, Position, Snapshot, Transaction, User, UserSession, utcnow
 
 app = FastAPI(title="Foliojoy API", version="0.1.0", docs_url="/api/docs", openapi_url="/api/openapi.json")
 ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:8080").split(",") if origin.strip()]
@@ -89,6 +90,41 @@ def owned_portfolio(portfolio_id: int, user_id: int, db: Session) -> Portfolio:
 
 def portfolio_dict(portfolio: Portfolio):
     return {"id": portfolio.id, "name": portfolio.name, "base_currency": portfolio.base_currency}
+
+
+def transaction_dict(record: Transaction):
+    def amount(value) -> str:
+        return format(Decimal(value).normalize(), "f")
+    return {
+        "id": record.id, "entry_key": record.entry_key, "date": record.txn_date.isoformat(),
+        "action": record.action, "symbol": record.symbol, "exchange": record.exchange,
+        "quantity": amount(record.quantity), "unit_price": amount(record.unit_price),
+        "cash_amount": amount(record.cash_amount), "currency": record.currency,
+        "fee_amount": amount(record.fee_amount), "notes": record.notes,
+    }
+
+
+def _same_transaction(record: Transaction, row: dict) -> bool:
+    return (
+        record.txn_date.isoformat() == row["date"] and record.action == row["action"]
+        and (record.symbol or None) == row["symbol"] and (record.exchange or None) == row["exchange"]
+        and Decimal(record.quantity) == Decimal(row["quantity"])
+        and Decimal(record.unit_price) == Decimal(row["unit_price"])
+        and Decimal(record.cash_amount) == Decimal(row["cash_amount"])
+        and record.currency == row["currency"]
+        and Decimal(record.fee_amount) == Decimal(row["fee_amount"])
+        and (record.notes or None) == row["notes"]
+    )
+
+
+def _cash_balance(db: Session, portfolio_id: int) -> Decimal:
+    total = Decimal("0")
+    for record in db.scalars(select(Transaction).where(Transaction.portfolio_id == portfolio_id)).all():
+        total += cash_effect(
+            record.action, Decimal(record.quantity), Decimal(record.unit_price),
+            Decimal(record.cash_amount), Decimal(record.fee_amount),
+        )
+    return total
 
 
 @app.get("/api/health")
@@ -227,6 +263,80 @@ def dashboard(portfolio_id: int, session: Annotated[UserSession, Depends(get_ses
         "total_value": str(total), "positions": positions,
         "metrics_unavailable": ["cost_basis", "pnl", "performance", "historical_returns"],
     }
+
+
+@app.post("/api/portfolios/{portfolio_id}/transactions/preview")
+def preview_transactions(portfolio_id: int, data: LedgerPreviewRequest, session: Annotated[UserSession, Depends(check_csrf)], db: Annotated[Session, Depends(get_db)]):
+    owned_portfolio(portfolio_id, session.user_id, db)
+    try:
+        rows = data.rows if data.rows is not None else parse_ledger_csv(data.csv_text or "")
+        result = normalize_ledger(rows, propose_keys=True)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    return {"rows": result, "valid": bool(result) and all(row["status"] == "valid" for row in result)}
+
+
+@app.post("/api/portfolios/{portfolio_id}/transactions", status_code=201)
+def commit_transactions(portfolio_id: int, data: LedgerCommitRequest, session: Annotated[UserSession, Depends(check_csrf)], db: Annotated[Session, Depends(get_db)]):
+    owned_portfolio(portfolio_id, session.user_id, db)
+    try:
+        rows = normalize_ledger(data.rows, propose_keys=False)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    if any(row["status"] != "valid" for row in rows):
+        raise HTTPException(422, {"message": "Fix validation errors before saving", "rows": rows})
+    existing = {
+        record.entry_key: record for record in db.scalars(
+            select(Transaction).where(
+                Transaction.portfolio_id == portfolio_id,
+                Transaction.entry_key.in_([row["entry_key"] for row in rows]),
+            )
+        ).all()
+    }
+    conflicts = [
+        {"entry_key": row["entry_key"], "row": row["row"], "message": "entry_key already recorded with different content"}
+        for row in rows if row["entry_key"] in existing and not _same_transaction(existing[row["entry_key"]], row)
+    ]
+    if conflicts:
+        raise HTTPException(409, {"message": "Conflicting entry_key values; nothing was recorded", "conflicts": conflicts, "recorded": []})
+    fresh = [row for row in rows if row["entry_key"] not in existing]
+    records = [Transaction(
+        portfolio_id=portfolio_id, entry_key=row["entry_key"], txn_date=date.fromisoformat(row["date"]),
+        action=row["action"], symbol=row["symbol"], exchange=row["exchange"],
+        quantity=Decimal(row["quantity"]), unit_price=Decimal(row["unit_price"]),
+        cash_amount=Decimal(row["cash_amount"]), currency="USD",
+        fee_amount=Decimal(row["fee_amount"]), notes=row["notes"],
+    ) for row in fresh]
+    db.add_all(records)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, {"message": "Conflicting entry_key values; nothing was recorded", "conflicts": [], "recorded": []})
+    balance = _cash_balance(db, portfolio_id)
+    stored = {
+        record.entry_key: record for record in db.scalars(
+            select(Transaction).where(
+                Transaction.portfolio_id == portfolio_id,
+                Transaction.entry_key.in_([row["entry_key"] for row in rows]),
+            )
+        ).all()
+    }
+    return {
+        "transaction_ids": [stored[row["entry_key"]].id for row in rows],
+        "reused": not fresh,
+        "cash_balance": str(balance),
+        "negative_cash_warning": balance < 0,
+    }
+
+
+@app.get("/api/portfolios/{portfolio_id}/transactions")
+def list_transactions(portfolio_id: int, session: Annotated[UserSession, Depends(get_session)], db: Annotated[Session, Depends(get_db)]):
+    owned_portfolio(portfolio_id, session.user_id, db)
+    records = db.scalars(
+        select(Transaction).where(Transaction.portfolio_id == portfolio_id).order_by(Transaction.txn_date, Transaction.id)
+    ).all()
+    return [transaction_dict(record) for record in records]
 
 
 @app.get("/api/templates/holdings.csv")

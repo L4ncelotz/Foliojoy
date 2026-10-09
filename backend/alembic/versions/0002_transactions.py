@@ -1,0 +1,25 @@
+"""Transaction ledger table (identity is portfolio_id + entry_key).
+
+Revision ID: 0002
+Revises: 0001
+"""
+from alembic import op
+from sqlalchemy.schema import CreateTable, CreateIndex
+from app.database import Base
+from app import models  # noqa: F401
+
+revision = "0002"
+down_revision = "0001"
+branch_labels = None
+depends_on = None
+
+
+def upgrade():
+    table = Base.metadata.tables["transactions"]
+    op.execute(CreateTable(table))
+    for index in table.indexes:
+        op.execute(CreateIndex(index))
+
+
+def downgrade():
+    op.drop_table("transactions")
