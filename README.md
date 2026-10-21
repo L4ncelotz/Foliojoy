@@ -47,6 +47,8 @@ npm run dev
 
 Visit http://127.0.0.1:5173 (use `127.0.0.1`, not `localhost`, if another local app already binds port 5173; then run `npm run dev -- --port 5174`). Backend uses `sqlite:///./portfolio_local.db` by default in this *development-only* mode; Docker Compose uses PostgreSQL. Vite proxies `/api` to the backend.
 
+The API rejects requests whose `Origin` header is not allowlisted (`403 Untrusted origin`). In local development it allows loopback origins on ports 5173, 5174 and 8080, so both `http://localhost:5173` and `http://127.0.0.1:5173` work. Set `ALLOWED_ORIGINS` to a comma-separated list to restrict it to the exact origins you serve; when it is set, it replaces the built-in list entirely.
+
 ## Tests
 
 ```bash

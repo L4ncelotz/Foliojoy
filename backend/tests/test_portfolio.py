@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.database import Base, get_db
-from app.main import app
+from app.main import DEFAULT_ALLOWED_ORIGINS, app
 
 
 @pytest.fixture
@@ -133,6 +133,15 @@ def test_password_and_origin_protection(client):
     assert blocked.status_code == 422
     bad_origin = client.post('/api/auth/register', headers={'Origin':'https://evil.example'}, json={'email':'a@example.com','password':'very-long-pass123'})
     assert bad_origin.status_code == 403
+
+
+def test_dev_frontend_origins_are_allowed(client):
+    # The dev frontend is reached as localhost or 127.0.0.1 (README and dev.bat)
+    # and may fall back to port 5174; writes must not fail as an untrusted origin.
+    for origin in ('http://localhost:5173', 'http://127.0.0.1:5173', 'http://127.0.0.1:5174'):
+        assert origin in DEFAULT_ALLOWED_ORIGINS
+    allowed = client.post('/api/auth/register', headers={'Origin': 'http://localhost:5173'}, json={'email': 'origin@example.com', 'password': 'safePassword1234'})
+    assert allowed.status_code == 201
 
 
 def test_input_limits_and_nonfinite_numbers(client):

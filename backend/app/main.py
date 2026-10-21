@@ -24,7 +24,16 @@ from .ledger import LedgerCommitRequest, LedgerPreviewRequest, cash_effect, norm
 from .models import Portfolio, Position, Snapshot, Transaction, User, UserSession, utcnow
 
 app = FastAPI(title="Foliojoy API", version="0.1.0", docs_url="/api/docs", openapi_url="/api/openapi.json")
-ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:8080").split(",") if origin.strip()]
+DEFAULT_ALLOWED_ORIGINS = ",".join(
+    f"http://{host}:{port}"
+    for host in ("localhost", "127.0.0.1")
+    for port in (5173, 5174, 8080)
+)
+ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("ALLOWED_ORIGINS", DEFAULT_ALLOWED_ORIGINS).split(",")
+    if origin.strip()
+]
 app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credentials=True, allow_methods=["GET", "POST"], allow_headers=["Content-Type", "X-CSRF-Token"])
 COOKIE_SECURE = os.getenv("COOKIE_SECURE", "false").lower() == "true"
 COOKIE_NAME = "portfolio_session"
