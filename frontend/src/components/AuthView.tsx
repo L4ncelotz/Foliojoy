@@ -17,7 +17,7 @@ export function AuthView({ onAuthenticated }: { onAuthenticated: (session: Sessi
     const next: { email?: string; password?: string } = {}
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextEmail.trim())) next.email = 'Enter a valid email address'
     if (!nextPassword) next.password = 'Password is required'
-    else if (nextMode === 'register' && nextPassword.length < 12) next.password = 'Password must be at least 12 characters'
+    else if (nextMode === 'register' && nextPassword.length < 8) next.password = 'Password must be at least 8 characters'
     else if (nextPassword.length > 128) next.password = 'Password must be at most 128 characters'
     return next
   }
@@ -209,10 +209,10 @@ export function AuthView({ onAuthenticated }: { onAuthenticated: (session: Sessi
                 <input
                   required
                   maxLength={128}
-                  minLength={mode === 'register' ? 12 : undefined}
+                  minLength={mode === 'register' ? 8 : undefined}
                   type={showPassword ? 'text' : 'password'}
                   autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
-                  placeholder={mode === 'register' ? 'At least 12 characters' : 'Enter your password'}
+                  placeholder={mode === 'register' ? 'At least 8 characters' : 'Enter your password'}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   onBlur={() => setFieldErrors(prev => ({ ...prev, password: validate(email, password, mode).password }))}

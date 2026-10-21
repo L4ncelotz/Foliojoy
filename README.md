@@ -4,7 +4,7 @@
 
 This repo starts the Portfolio Intelligence app discussed in `docs/`. It contains a working first slice:
 
-- Register / sign in / sign out with Argon2 password hashing and DB-backed httpOnly cookie sessions.
+- Register / sign in / sign out with Argon2 password hashing and DB-backed httpOnly cookie sessions. Passwords must be at least 8 characters (the NIST SP 800-63B floor for single-factor authentication).
 - Create user-owned USD portfolios.
 - Download holdings CSV template, upload CSV (max 256 KB / 200 positions), or edit holdings manually.
 - Validate before commit: date, symbol/exchange syntax, duplicate positions, finite positive numeric fields, reconciliation, USD only.

@@ -135,6 +135,15 @@ def test_password_and_origin_protection(client):
     assert bad_origin.status_code == 403
 
 
+def test_password_length_policy(client):
+    # The floor is 8 characters (NIST SP 800-63B minimum for single-factor
+    # password authentication); 7 is rejected, 8 is accepted.
+    accepted = client.post('/api/auth/register', json={'email': 'eightchars@example.com', 'password': 'abcd1234'})
+    assert accepted.status_code == 201, accepted.text
+    rejected = client.post('/api/auth/register', json={'email': 'sevenchars@example.com', 'password': 'abc1234'})
+    assert rejected.status_code == 422
+
+
 def test_dev_frontend_origins_are_allowed(client):
     # The dev frontend is reached as localhost or 127.0.0.1 (README and dev.bat)
     # and may fall back to port 5174; writes must not fail as an untrusted origin.

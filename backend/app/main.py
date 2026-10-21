@@ -43,7 +43,7 @@ hasher = PasswordHasher(time_cost=3, memory_cost=65536, parallelism=2)
 
 class Credentials(BaseModel):
     email: EmailStr
-    password: str = Field(min_length=12, max_length=128)
+    password: str = Field(min_length=8, max_length=128)
 
 
 class PortfolioCreate(BaseModel):
