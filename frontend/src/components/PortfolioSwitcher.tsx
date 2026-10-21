@@ -27,6 +27,7 @@ export function PortfolioSwitcher({
           type="button"
           className="portfolio-popover-trigger"
           aria-label="Select portfolio"
+          title={currentPortfolio ? currentPortfolio.name : 'Select a portfolio'}
           data-state={open ? 'open' : 'closed'}
         >
           <Wallet size={16} className="trigger-icon" />

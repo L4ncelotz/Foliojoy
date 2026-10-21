@@ -246,7 +246,7 @@ export default function App() {
         onOpenChange={setCreating}
         onSubmit={handleCreatePortfolio}
       />
-      <Toaster position="bottom-right" theme="dark" richColors closeButton />
+      <Toaster position="bottom-right" theme="light" richColors closeButton />
     </div>
   )
 }

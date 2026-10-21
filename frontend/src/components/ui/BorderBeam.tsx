@@ -7,7 +7,7 @@ interface BorderBeamProps {
 export function BorderBeam({
   className = '',
   duration = 8,
-  color = '#c9e98e',
+  color = '#1F4E3D',
 }: BorderBeamProps) {
   return (
     <div className={`border-beam-container ${className}`} aria-hidden="true">

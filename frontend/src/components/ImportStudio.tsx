@@ -16,7 +16,6 @@ import { api, emptyRow, type Portfolio, type Preview, type RawRow } from '../api
 import { FadeContent } from './ui/FadeContent'
 import { SpotlightCard } from './ui/SpotlightCard'
 import { BorderBeam } from './ui/BorderBeam'
-import { MagneticButton } from './ui/MagneticButton'
 
 interface ImportStudioProps {
   portfolio: Portfolio
@@ -201,17 +200,16 @@ export function ImportStudio({ portfolio, onCommitted }: ImportStudioProps) {
         <h3>Drop your CSV file here</h3>
         <p className="dropzone-subtitle">or browse files from your device</p>
 
-        <MagneticButton
+        <button
           type="button"
           className="button primary"
           onClick={e => {
             e.stopPropagation()
             inputRef.current?.click()
           }}
-          strength={0.25}
         >
           <span>Choose CSV</span>
-        </MagneticButton>
+        </button>
         <span className="dropzone-badge">
           Supports CSV files up to 256 KB · USD only
         </span>
@@ -222,7 +220,7 @@ export function ImportStudio({ portfolio, onCommitted }: ImportStudioProps) {
           ref={inputRef}
           onChange={e => loadFile(e.target.files?.[0])}
         />
-        {isDragging && <BorderBeam duration={5} color="#c9e98e" />}
+        {isDragging && <BorderBeam duration={5} color="#1F4E3D" />}
       </SpotlightCard>
 
       {/* Secondary Actions (2-Column Grid matching Image #2) */}
@@ -262,7 +260,7 @@ export function ImportStudio({ portfolio, onCommitted }: ImportStudioProps) {
 
       {/* Polished Holdings Snapshot Table Editor */}
       <div className="surface editor-card" ref={tableRef} style={{ position: 'relative' }}>
-        {preview?.valid && <BorderBeam duration={8} color="#4ade80" />}
+        {preview?.valid && <BorderBeam duration={8} color="#237A34" />}
         <div className="editor-header">
           <div>
             <h3>Holdings snapshot</h3>
@@ -406,7 +404,7 @@ export function ImportStudio({ portfolio, onCommitted }: ImportStudioProps) {
       )}
 
       <div className="disclaimer-line">
-        <ShieldCheck size={16} style={{ color: 'var(--accent-lime)' }} />
+        <ShieldCheck size={16} style={{ color: 'var(--accent-brand)' }} />
         <span>
           The final portfolio is saved only after your confirmation. Cost basis and performance require transaction history.
         </span>
