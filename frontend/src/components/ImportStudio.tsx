@@ -11,8 +11,11 @@ import {
   ShieldCheck,
   Trash2,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { api, emptyRow, type Portfolio, type Preview, type RawRow } from '../api'
 import { FadeContent } from './ui/FadeContent'
+import { SpotlightCard } from './ui/SpotlightCard'
+import { BorderBeam } from './ui/BorderBeam'
 
 interface ImportStudioProps {
   portfolio: Portfolio
@@ -80,7 +83,9 @@ export function ImportStudio({ portfolio, onCommitted }: ImportStudioProps) {
     setError('')
     setFileName(file.name)
     if (file.size > 256000 || !file.name.toLowerCase().endsWith('.csv')) {
-      setError('This first slice supports CSV files up to 256 KB. Image, PDF and Excel import are scheduled for Phase 2.')
+      const msg = 'This first slice supports CSV files up to 256 KB. Image, PDF and Excel import are scheduled for Phase 2.'
+      setError(msg)
+      toast.error(msg)
       setWorking(false)
       return
     }
@@ -105,11 +110,13 @@ export function ImportStudio({ portfolio, onCommitted }: ImportStudioProps) {
         setDate(result.rows[0].snapshot_date)
       }
       tableRef.current?.scrollIntoView({ behavior: 'smooth' })
+      toast.success(`Imported ${result.rows.length} rows from ${file.name}`)
     } catch (err) {
       setPreview(null)
-      setError((err as Error).message)
+      const msg = (err as Error).message
+      setError(msg)
+      toast.error(msg)
     } finally {
-      setWorking(false)
       if (inputRef.current) inputRef.current.value = ''
     }
   }
@@ -123,9 +130,12 @@ export function ImportStudio({ portfolio, onCommitted }: ImportStudioProps) {
         method: 'POST',
         body: JSON.stringify({ rows }),
       })
+      toast.success('Holdings snapshot saved successfully!')
       onCommitted()
     } catch (err) {
-      setError((err as Error).message)
+      const msg = (err as Error).message
+      setError(msg)
+      toast.error(msg)
       setPreview(null)
     } finally {
       setWorking(false)
@@ -168,7 +178,7 @@ export function ImportStudio({ portfolio, onCommitted }: ImportStudioProps) {
       </div>
 
       {/* Primary Hero Dropzone (Image #2) */}
-      <div
+      <SpotlightCard
         className={`dropzone-card ${isDragging ? 'drag-active' : ''}`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -200,11 +210,9 @@ export function ImportStudio({ portfolio, onCommitted }: ImportStudioProps) {
         >
           <span>Choose CSV</span>
         </button>
-
         <span className="dropzone-badge">
           Supports CSV files up to 256 KB · USD only
         </span>
-
         <input
           hidden
           type="file"
@@ -212,41 +220,47 @@ export function ImportStudio({ portfolio, onCommitted }: ImportStudioProps) {
           ref={inputRef}
           onChange={e => loadFile(e.target.files?.[0])}
         />
-      </div>
+        {isDragging && <BorderBeam duration={5} color="#1F4E3D" />}
+      </SpotlightCard>
 
       {/* Secondary Actions (2-Column Grid matching Image #2) */}
       <div className="import-secondary-grid">
-        <button
-          type="button"
-          className="action-card"
-          onClick={handleManualEntryClick}
-        >
-          <div className="action-card-icon">
-            <FileSpreadsheet size={20} />
-          </div>
-          <div className="action-card-text">
-            <strong>Enter manually</strong>
-            <span>Add holdings in a table</span>
-          </div>
-        </button>
+        <SpotlightCard className="action-card-spotlight">
+          <button
+            type="button"
+            className="action-card"
+            onClick={handleManualEntryClick}
+          >
+            <div className="action-card-icon">
+              <FileSpreadsheet size={20} />
+            </div>
+            <div className="action-card-text">
+              <strong>Enter manually</strong>
+              <span>Add holdings in a table</span>
+            </div>
+          </button>
+        </SpotlightCard>
 
-        <a
-          className="action-card"
-          download
-          href="/api/templates/holdings.csv"
-        >
-          <div className="action-card-icon">
-            <ArrowDownToLine size={20} />
-          </div>
-          <div className="action-card-text">
-            <strong>CSV template</strong>
-            <span>Download the format</span>
-          </div>
-        </a>
+        <SpotlightCard className="action-card-spotlight">
+          <a
+            className="action-card"
+            download
+            href="/api/templates/holdings.csv"
+          >
+            <div className="action-card-icon">
+              <ArrowDownToLine size={20} />
+            </div>
+            <div className="action-card-text">
+              <strong>CSV template</strong>
+              <span>Download the format</span>
+            </div>
+          </a>
+        </SpotlightCard>
       </div>
 
       {/* Polished Holdings Snapshot Table Editor */}
-      <div className="surface editor-card" ref={tableRef}>
+      <div className="surface editor-card" ref={tableRef} style={{ position: 'relative' }}>
+        {preview?.valid && <BorderBeam duration={8} color="#237A34" />}
         <div className="editor-header">
           <div>
             <h3>Holdings snapshot</h3>
@@ -351,10 +365,12 @@ export function ImportStudio({ portfolio, onCommitted }: ImportStudioProps) {
 
           <div className="editor-footer-actions">
             {preview?.valid && (
-              <span className="valid-indicator">
-                <CheckCircle2 size={16} />
-                <span>All {preview.rows.length} rows valid</span>
-              </span>
+              <FadeContent>
+                <span className="valid-indicator">
+                  <CheckCircle2 size={16} />
+                  <span>All {preview.rows.length} rows valid</span>
+                </span>
+              </FadeContent>
             )}
 
             <button
@@ -388,7 +404,7 @@ export function ImportStudio({ portfolio, onCommitted }: ImportStudioProps) {
       )}
 
       <div className="disclaimer-line">
-        <ShieldCheck size={16} style={{ color: 'var(--accent-lime)' }} />
+        <ShieldCheck size={16} style={{ color: 'var(--accent-brand)' }} />
         <span>
           The final portfolio is saved only after your confirmation. Cost basis and performance require transaction history.
         </span>

@@ -6,7 +6,7 @@ import json
 import os
 import secrets
 from datetime import date, timedelta
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from typing import Annotated
 
 from argon2 import PasswordHasher
@@ -19,12 +19,21 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .database import get_db
-from .imports import CommitRequest, PreviewRequest, normalize, parse_csv
+from .imports import CENT, CommitRequest, PreviewRequest, normalize, parse_csv
 from .ledger import LedgerCommitRequest, LedgerPreviewRequest, cash_effect, normalize_ledger, parse_ledger_csv
 from .models import Portfolio, Position, Snapshot, Transaction, User, UserSession, utcnow
 
 app = FastAPI(title="Foliojoy API", version="0.1.0", docs_url="/api/docs", openapi_url="/api/openapi.json")
-ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:8080").split(",") if origin.strip()]
+DEFAULT_ALLOWED_ORIGINS = ",".join(
+    f"http://{host}:{port}"
+    for host in ("localhost", "127.0.0.1")
+    for port in (5173, 5174, 8080)
+)
+ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("ALLOWED_ORIGINS", DEFAULT_ALLOWED_ORIGINS).split(",")
+    if origin.strip()
+]
 app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_credentials=True, allow_methods=["GET", "POST"], allow_headers=["Content-Type", "X-CSRF-Token"])
 COOKIE_SECURE = os.getenv("COOKIE_SECURE", "false").lower() == "true"
 COOKIE_NAME = "portfolio_session"
@@ -118,13 +127,23 @@ def _same_transaction(record: Transaction, row: dict) -> bool:
 
 
 def _cash_balance(db: Session, portfolio_id: int) -> Decimal:
-    total = Decimal("0")
-    for record in db.scalars(select(Transaction).where(Transaction.portfolio_id == portfolio_id)).all():
-        total += cash_effect(
-            record.action, Decimal(record.quantity), Decimal(record.unit_price),
-            Decimal(record.cash_amount), Decimal(record.fee_amount),
-        )
-    return total
+    """Portfolio cash balance in USD, reported in cents.
+
+    Quantized here so the figure is stable: a trade's cash effect is
+    quantity x unit_price, whose decimal scale otherwise depends on whether
+    the session still holds the in-memory values (scale 0) or re-reads them
+    from a NUMERIC(24, 8) column (scale 8). A widened context keeps the sum
+    exact instead of silently rounding it at the default 28 digits.
+    """
+    with localcontext() as ctx:
+        ctx.prec = 60
+        total = Decimal("0")
+        for record in db.scalars(select(Transaction).where(Transaction.portfolio_id == portfolio_id)).all():
+            total += cash_effect(
+                record.action, Decimal(record.quantity), Decimal(record.unit_price),
+                Decimal(record.cash_amount), Decimal(record.fee_amount),
+            )
+        return total.quantize(CENT)
 
 
 @app.get("/api/health")

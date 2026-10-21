@@ -16,6 +16,8 @@ import { CreatePortfolioModal } from './components/CreatePortfolioModal'
 import { DashboardView } from './components/DashboardView'
 import { ImportStudio } from './components/ImportStudio'
 import { FadeContent } from './components/ui/FadeContent'
+import { AnimatedContent } from './components/ui/AnimatedContent'
+import { Toaster, toast } from 'sonner'
 
 export default function App() {
   const queryClient = useQueryClient()
@@ -54,11 +56,13 @@ export default function App() {
     await queryClient.invalidateQueries({ queryKey: ['portfolios'] })
     setSelected(record.id)
     setScreen('import')
+    toast.success(`Portfolio "${record.name}" created`)
   }
 
   async function handleLogout() {
     try {
       await api('/auth/logout', { method: 'POST' })
+      toast.info('Signed out')
     } finally {
       setCsrf('')
       setSession(null)
@@ -189,21 +193,23 @@ export default function App() {
         {/* Content Area */}
         <main className="content">
           {portfolio ? (
-            screen === 'dashboard' ? (
-              <DashboardView
-                portfolio={portfolio}
-                onImport={() => setScreen('import')}
-              />
-            ) : (
-              <ImportStudio
-                key={portfolio.id}
-                portfolio={portfolio}
-                onCommitted={() => {
-                  queryClient.invalidateQueries({ queryKey: ['dashboard', portfolio.id] })
-                  setScreen('dashboard')
-                }}
-              />
-            )
+            <AnimatedContent key={screen} direction="up" distance={8} duration={220}>
+              {screen === 'dashboard' ? (
+                <DashboardView
+                  portfolio={portfolio}
+                  onImport={() => setScreen('import')}
+                />
+              ) : (
+                <ImportStudio
+                  key={portfolio.id}
+                  portfolio={portfolio}
+                  onCommitted={() => {
+                    queryClient.invalidateQueries({ queryKey: ['dashboard', portfolio.id] })
+                    setScreen('dashboard')
+                  }}
+                />
+              )}
+            </AnimatedContent>
           ) : (
             <FadeContent>
               <div className="empty-state-center-container surface" style={{ marginTop: '40px', padding: '48px 24px' }}>
@@ -240,6 +246,7 @@ export default function App() {
         onOpenChange={setCreating}
         onSubmit={handleCreatePortfolio}
       />
+      <Toaster position="bottom-right" theme="light" richColors closeButton />
     </div>
   )
 }

@@ -1,6 +1,8 @@
 import { FormEvent, useState } from 'react'
 import { ArrowRight, ChartNoAxesCombined, CircleAlert, Eye, EyeOff, ShieldCheck } from 'lucide-react'
 import { api, refreshSession, type Session } from '../api'
+import { holdingColor } from '../lib/palette'
+import { BlurText } from './ui/BlurText'
 
 export function AuthView({ onAuthenticated }: { onAuthenticated: (session: Session) => void }) {
   const [mode, setMode] = useState<'register' | 'login'>('register')
@@ -58,7 +60,9 @@ export function AuthView({ onAuthenticated }: { onAuthenticated: (session: Sessi
 
         <div className="auth-hero-content">
           <span className="eyebrow">PORTFOLIO INTELLIGENCE</span>
-          <h1>Your investments, in focus.</h1>
+          <h1>
+            <BlurText text="Your investments, in focus." />
+          </h1>
           <p className="hero-desc">
             Track your portfolio, understand your exposure, and make more informed decisions.
           </p>
@@ -66,7 +70,7 @@ export function AuthView({ onAuthenticated }: { onAuthenticated: (session: Sessi
           {/* Elevated Illustrative Preview Card */}
           <div className="auth-preview-card" aria-hidden="true">
             <div className="auth-preview-header">
-              <span className="status-pill" style={{ color: 'var(--accent-lime)', backgroundColor: 'rgba(201, 233, 142, 0.1)' }}>
+              <span className="status-pill" style={{ color: 'var(--accent-brand)', backgroundColor: 'var(--accent-brand-subtle)' }}>
                 Illustrative preview
               </span>
               <span className="status-pill">Demo data only</span>
@@ -75,11 +79,11 @@ export function AuthView({ onAuthenticated }: { onAuthenticated: (session: Sessi
             <div className="auth-preview-body">
               {/* SVG Donut Illustration */}
               <svg className="preview-donut-svg" viewBox="0 0 40 40">
-                <circle cx="20" cy="20" r="14" fill="transparent" stroke="#1a2538" strokeWidth="5" />
+                <circle cx="20" cy="20" r="14" fill="transparent" stroke="#E3E0D6" strokeWidth="5" />
                 {/* VTI 52% */}
                 <circle
                   cx="20" cy="20" r="14" fill="transparent"
-                  stroke="#c9e98e" strokeWidth="5"
+                  stroke="#1F4E3D" strokeWidth="5"
                   strokeDasharray="45.74 87.96" strokeDashoffset="0"
                   strokeLinecap="round"
                   transform="rotate(-90 20 20)"
@@ -87,7 +91,7 @@ export function AuthView({ onAuthenticated }: { onAuthenticated: (session: Sessi
                 {/* VXUS 28% */}
                 <circle
                   cx="20" cy="20" r="14" fill="transparent"
-                  stroke="#638af7" strokeWidth="5"
+                  stroke={holdingColor(0)} strokeWidth="5"
                   strokeDasharray="24.63 87.96" strokeDashoffset="-47.5"
                   strokeLinecap="round"
                   transform="rotate(-90 20 20)"
@@ -95,7 +99,7 @@ export function AuthView({ onAuthenticated }: { onAuthenticated: (session: Sessi
                 {/* BND 20% */}
                 <circle
                   cx="20" cy="20" r="14" fill="transparent"
-                  stroke="#39b8a1" strokeWidth="5"
+                  stroke={holdingColor(1)} strokeWidth="5"
                   strokeDasharray="17.59 87.96" strokeDashoffset="-73.5"
                   strokeLinecap="round"
                   transform="rotate(-90 20 20)"
@@ -105,33 +109,33 @@ export function AuthView({ onAuthenticated }: { onAuthenticated: (session: Sessi
               <div className="preview-bars-container">
                 <div className="preview-bar-row">
                   <span style={{ color: 'var(--text-secondary)' }}>VTI · Total US</span>
-                  <strong style={{ color: 'var(--accent-lime)' }}>52%</strong>
+                  <strong style={{ color: 'var(--accent-brand)' }}>52%</strong>
                 </div>
                 <div className="preview-bar-track">
-                  <div className="preview-bar-fill" style={{ width: '52%', backgroundColor: '#c9e98e' }} />
+                  <div className="preview-bar-fill" style={{ width: '52%', backgroundColor: '#1F4E3D' }} />
                 </div>
 
                 <div className="preview-bar-row">
                   <span style={{ color: 'var(--text-secondary)' }}>VXUS · Ex-US</span>
-                  <strong style={{ color: '#638af7' }}>28%</strong>
+                  <strong style={{ color: holdingColor(0) }}>28%</strong>
                 </div>
                 <div className="preview-bar-track">
-                  <div className="preview-bar-fill" style={{ width: '28%', backgroundColor: '#638af7' }} />
+                  <div className="preview-bar-fill" style={{ width: '28%', backgroundColor: holdingColor(0) }} />
                 </div>
 
                 <div className="preview-bar-row">
                   <span style={{ color: 'var(--text-secondary)' }}>BND · Total Bond</span>
-                  <strong style={{ color: '#39b8a1' }}>20%</strong>
+                  <strong style={{ color: holdingColor(1) }}>20%</strong>
                 </div>
                 <div className="preview-bar-track">
-                  <div className="preview-bar-fill" style={{ width: '20%', backgroundColor: '#39b8a1' }} />
+                  <div className="preview-bar-fill" style={{ width: '20%', backgroundColor: holdingColor(1) }} />
                 </div>
               </div>
             </div>
 
             <div style={{ marginTop: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>USD Only · Holdings Snapshot</span>
-              <span style={{ fontSize: '0.6875rem', color: 'var(--accent-lime)', fontWeight: 600 }}>Deterministic Math</span>
+              <span style={{ fontSize: '0.6875rem', color: 'var(--accent-brand)', fontWeight: 600 }}>Deterministic Math</span>
             </div>
           </div>
         </div>
