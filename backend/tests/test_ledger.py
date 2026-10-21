@@ -186,6 +186,20 @@ def test_cash_balance_and_negative_warning(client):
     assert r.json()["negative_cash_warning"] is True
 
 
+def test_cash_balance_of_a_trade_is_reported_in_cents(client):
+    # quantity x unit_price carries no inherent cent scale, so the balance is
+    # quantized: without it the same ledger reports "-1300" or
+    # "-1300.0000000000000000" depending on how the values were loaded.
+    headers = register(client)
+    pid = create(client, headers)
+    r = commit(client, pid, headers, [buy("buy-cents-1", unit_price="130")])
+    assert r.status_code == 201, r.text
+    assert r.json()["cash_balance"] == "-1300.00", "trade cash effect is reported in cents"
+    r = commit(client, pid, headers, [buy("buy-cents-2", unit_price="130.00")])
+    assert r.status_code == 201, r.text
+    assert r.json()["cash_balance"] == "-2600.00", "balance stays in cents as entries accumulate"
+
+
 def test_ledger_isolated_and_snapshot_untouched(client):
     headers = register(client, "owner@example.com")
     pid = create(client, headers)
